@@ -1,1 +1,1 @@
-export const DB_NAME ="NutriiDB";
+export const DB_NAME ="EvoriaDB";

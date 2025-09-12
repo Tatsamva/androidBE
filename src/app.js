@@ -14,12 +14,11 @@ app.use(cookieParser());
 // import routes
 
 import userRouter from "./routes/users.routes.js"
-import scanRouter from "./routes/scan.routes.js"
-
+import eventRouter from "./routes/event.routes.js"
 // routes declaration
 
 app.use("/users",userRouter)
-app.use("/scanner",scanRouter)
+app.use("/events",eventRouter)
 
 export {app} 
 

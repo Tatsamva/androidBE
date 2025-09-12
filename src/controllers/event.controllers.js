@@ -1,0 +1,191 @@
+import { asyncHandler } from "../utils/asyncHandler.js";
+import {ApiError} from "../utils/ApiError.js";
+import { User } from "../models/user.models.js";
+import {uploadOnCloudinary} from "../utils/cloudinary.js";
+import {ApiResponse} from "../utils/ApiResponse.js";
+import { Event } from "../models/event.models.js";
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import mime from 'mime';
+import fs from 'fs';
+import dotenv from "dotenv";
+dotenv.config();
+
+
+const registerNewEvent = asyncHandler(async (req, res) => {
+    const {
+        address,
+        userId,
+        eventType,
+        eventDate,
+        eventTime,
+        numOFMembers,
+        venue,
+        totalPrice
+    } = req.body;
+
+    // ✅ Validate required fields
+    if (
+        !userId ||
+        !eventType ||
+        !eventDate ||
+        !eventTime ||
+        !numOFMembers ||
+        !venue ||
+        !totalPrice
+    ) {
+        throw new ApiError(409, "One or more required fields are empty");
+    }
+
+    // ✅ Check if user exists
+    const existUser = await User.findById(userId);
+    if (!existUser) {
+        throw new ApiError(404, "User does not exist");
+    }
+
+    // ✅ Update user address if provided
+    if (address) {
+        existUser.address = address;
+        await existUser.save();
+    }
+
+    // ✅ Check for event conflict (same venue + date + time)
+    const existingEvent = await Event.findOne({
+        venue,
+        eventDate,
+        eventTime, // dropdown ensures exact string match
+    });
+
+    if (existingEvent) {
+        throw new ApiError(409, "This time slot is already booked at this venue");
+    }
+
+    // ✅ Create new event
+    const newEvent = await Event.create({
+        user: userId,
+        eventType,
+        eventDate,
+        eventTime,
+        numOFMembers,
+        venue,
+        totalPrice,
+    });
+
+    return res.status(201).json(
+        new ApiResponse(200, newEvent, "New event registered successfully")
+    );
+});
+
+//Admin
+const getAllEventsByCategory = asyncHandler(async (req, res) => {
+    const { eventType } = req.body;
+
+    if (!eventType) {
+        throw new ApiError(400, "Event type is required");
+    }
+
+    const allEventsByCategory = await Event.find({ eventType });
+
+    if (!allEventsByCategory || allEventsByCategory.length === 0) {
+        throw new ApiError(404, "No events found for this category");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, allEventsByCategory, "Events fetched successfully")
+    );
+});
+//user
+const getAllEventsOfUser = asyncHandler(async (req, res) => {
+    const { userId } = req.body;
+
+    // Validate required fields
+    if (!userId) {
+        throw new ApiError(400, "User ID is required");
+    }
+
+    // Check if user exists
+    const existUser = await User.findById(userId);
+    if (!existUser) {
+        throw new ApiError(404, "User does not exist");
+    }
+
+    // Fetch all events by user
+    const userEvents = await Event.find({ user: userId });
+
+    if (!userEvents || userEvents.length === 0) {
+        throw new ApiError(404, "No events found for this user");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, userEvents, "User events fetched successfully")
+    );
+});
+
+const updateEventDetails = asyncHandler(async (req, res) => {
+    const { 
+        id,              // event id
+        userId, 
+        name, 
+        email, 
+        phone, 
+        address,
+        eventType, 
+        eventDate, 
+        eventTime, 
+        numOFMembers, 
+        venue, 
+        totalPrice 
+    } = req.body;
+
+    // ✅ Validate required fields
+    if (!userId) {
+        throw new ApiError(400, "User ID is required");
+    }
+    if (!id) {
+        throw new ApiError(400, "Event ID is required");
+    }
+
+    // ✅ Check if user exists
+    let existUser = await User.findById(userId).select("-password -refreshToken");
+    if (!existUser) {
+        throw new ApiError(404, "User does not exist");
+    }
+
+    // ✅ Update user details
+    if (name) existUser.name = name;
+    if (email) existUser.email = email;
+    if (phone) existUser.phone = phone;
+    if (address) existUser.address = address;
+    await existUser.save();
+
+    // Re-fetch user to apply select after save
+    existUser = await User.findById(userId).select("-password -refreshToken");
+
+    // ✅ Check if event exists
+    const existEvent = await Event.findById(id);
+    if (!existEvent) {
+        throw new ApiError(404, "Event does not exist");
+    }
+
+    // ✅ Update event details
+    if (eventType) existEvent.eventType = eventType;
+    if (eventDate) existEvent.eventDate = eventDate;
+    if (eventTime) existEvent.eventTime = eventTime;
+    if (numOFMembers) existEvent.numOFMembers = numOFMembers;
+    if (venue) existEvent.venue = venue;
+    if (totalPrice) existEvent.totalPrice = totalPrice;
+    await existEvent.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, { user: existUser, event: existEvent }, "User & Event updated successfully")
+    );
+});
+
+
+
+
+export{
+    registerNewEvent,
+    getAllEventsByCategory,
+    getAllEventsOfUser,
+    updateEventDetails
+}

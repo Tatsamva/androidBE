@@ -1,15 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
-import { History } from "../models/history.models.js";
-import {uploadOnCloudinary} from "../utils/cloudinary.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import fs from 'fs';
-import PDFDocument from 'pdfkit';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import path from 'path';
+
 dotenv.config();
 
 
@@ -36,8 +31,12 @@ const registerUser = asyncHandler
     async(req,res) => 
     {
       
-         const {email,password} = req.body;
+         const {email,password,phone,address,name} = req.body;
          
+         if (!email || !password || !phone || !address || !name) 
+            {
+            throw new ApiError(409, "One or more required fields are empty");
+            }
          
          const existedUser = await User.findOne({email});
 
@@ -50,7 +49,10 @@ const registerUser = asyncHandler
          (
             {
                 email,
-                password
+                password,
+                phone,
+                address,
+                name
             }
          )
 
@@ -252,125 +254,33 @@ const refreshAccessToken = asyncHandler
 
    }
 )
+//Admin
+const updateUserDetails = asyncHandler(async (req, res) => {
+    const { userId, name, email, phone } = req.body;
 
-const getUserHistory = asyncHandler(
-   async(req,res)=>
-   {
-      const  userId=req.user._id;
-      
-      const user = await User.findOne({ _id: userId });
-      
-      if(!user)
-      {
-         throw new ApiError(404,"user does not exist")
-      }
-      
-      const findAllHistory = await History.find({ user:{ $in: userId } })
-      if(!findAllHistory)
-      {
-         throw new ApiError(400,"you don't have any history")
-      }
+    // Validate required fields
+    if (!userId) {
+        throw new ApiError(400, "User ID is required");
+    }
 
-      return res
-      .status(200)
-      .json(
-         new ApiResponse(200,"Your history",findAllHistory)
-      )
-   }
-)
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
 
+    // Update only provided fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
 
+    // Save updated user
+    await user.save();
 
-const generateFoodReport = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  console.log(userId)
-  const user = await User.findById(userId);
-  if (!user) throw new ApiError(404, "User not found");
-
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  const history = await History.find({
-    user: userId,
-    createdAt: { $gte: sevenDaysAgo },
-  });
-
-  if (!history || history.length === 0) {
-    throw new ApiError(404, "No food scan history in the last 7 days");
-  }
-
-  // Gemini AI
-  const genAI = new GoogleGenerativeAI(process.env.GAPI_KEY);
-  const model = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-  const prompt = `
-You are a professional AI nutritionist. Based on the following 7 days of food intake, provide a comprehensive analysis that includes:
-
-Summary of Nutritional Patterns:
-
-Macronutrient distribution (carbs, proteins, fats)
-
-Micronutrient observations (e.g., fiber, vitamins, minerals)
-
-Recurring food types or habits
-
-Key Insights:
-
-Identify any nutritional imbalances or deficiencies
-
-Highlight any trends (e.g., high sugar intake, low fiber, excessive processed foods)
-
-Personalized Recommendations:
-
-Actionable suggestions to improve overall diet quality
-
-Suggestions for meal improvements or substitutions
-
-Highlight one or two high-impact changes
-
-Use a professional yet accessible tone. Keep the advice grounded in established nutritional guidelines (e.g., WHO, USDA, ICMR) and avoid vague generalities.
-
-Here is the food history data:
-${JSON.stringify(history, null, 2)}
-`;
-
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const aiText = await response.text();
-
-  // PDF generation
-  const tempDir = path.join("public", "temp");
-  if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir, { recursive: true });
-  }
-  const pdfPath = path.join(tempDir, `ai_nutrition_report_${userId}.pdf`);
-  console.log("Saving PDF at:", pdfPath);
-  const doc = new PDFDocument();
-  const writeStream = fs.createWriteStream(pdfPath);
-  doc.pipe(writeStream);
-  doc.fontSize(18).text("AI-Based Nutrition Summary", { align: "center" }).moveDown();
-  doc.fontSize(14).text(`User: ${user.name}`).moveDown();
-  doc.fontSize(12).text(aiText, { align: "left" });
-  doc.end();
-
-  await new Promise((resolve) => writeStream.on("finish", resolve));
-
-  
-
-     const uploadedPDF = await uploadOnCloudinary(pdfPath);
-  
-
-  if (!uploadedPDF || !uploadedPDF.secure_url) {
-    throw new ApiError(500, "PDF upload failed");
-  }
-  
-
-  return res.status(200).json(
-    new ApiResponse(200, { pdfUrl: uploadedPDF.secure_url }, "AI PDF report generated")
-  );
+    return res.status(200).json(
+        new ApiResponse(200, user, "User details updated successfully")
+    );
 });
-
-
 
 
 export 
@@ -380,6 +290,7 @@ export
    logoutUser,
    refreshAccessToken,
    authRedirect,
-   getUserHistory,
-   generateFoodReport
+   updateUserDetails
+   
+ 
 }
