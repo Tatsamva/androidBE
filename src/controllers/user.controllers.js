@@ -33,7 +33,7 @@ const registerUser = asyncHandler
       
          const {email,password,phone,address,name} = req.body;
          
-         if (!email || !password || !phone || !address || !name) 
+         if (!email || !password || !phone  || !name) 
             {
             throw new ApiError(409, "One or more required fields are empty");
             }
