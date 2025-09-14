@@ -114,11 +114,15 @@ const getEventCounts = asyncHandler(async (req, res) => {
         countsByCategory[category] = (countsByCategory[category] || 0) + 1;
     });
 
+    // Add totalEvents to countsByCategory
+    countsByCategory["totalEvents"] = totalEvents;
+
     // Send response
     return res.status(200).json(
-        new ApiResponse(200, { totalEvents, countsByCategory }, "Event counts fetched successfully")
+        new ApiResponse(200, countsByCategory, "Event counts fetched successfully")
     );
 });
+
 //user
 const getAllEventsOfUser = asyncHandler(async (req, res) => {
     const { userId } = req.body;
