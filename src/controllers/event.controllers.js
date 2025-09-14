@@ -119,7 +119,7 @@ const getEventCounts = asyncHandler(async (req, res) => {
 
     // Send response
     return res.status(200).json(
-        new ApiResponse(200, countsByCategory, "Event counts fetched successfully")
+        new ApiResponse(200, {countsByCategory}, "Event counts fetched successfully")
     );
 });
 
