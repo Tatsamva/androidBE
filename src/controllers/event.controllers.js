@@ -115,7 +115,7 @@ const getEventCounts = asyncHandler(async (req, res) => {
     });
 
     // Add totalEvents to countsByCategory
-    countsByCategory["totalEvents"] = totalEvents;
+    countsByCategory["All Events"] = totalEvents;
 
     // Send response
     return res.status(200).json(
