@@ -93,6 +93,32 @@ const getAllEventsByCategory = asyncHandler(async (req, res) => {
         new ApiResponse(200, allEventsByCategory, "Events fetched successfully")
     );
 });
+
+
+const getEventCounts = asyncHandler(async (req, res) => {
+    // Fetch all events
+    const allEvents = await Event.find();
+
+    if (!allEvents) {
+        throw new ApiError(404, "No events found");
+    }
+
+    // Total events
+    const totalEvents = allEvents.length;
+
+    // Count by category
+    const countsByCategory = {};
+
+    allEvents.forEach(event => {
+        const category = event.eventType || "Uncategorized";
+        countsByCategory[category] = (countsByCategory[category] || 0) + 1;
+    });
+
+    // Send response
+    return res.status(200).json(
+        new ApiResponse(200, { totalEvents, countsByCategory }, "Event counts fetched successfully")
+    );
+});
 //user
 const getAllEventsOfUser = asyncHandler(async (req, res) => {
     const { userId } = req.body;
@@ -187,5 +213,6 @@ export{
     registerNewEvent,
     getAllEventsByCategory,
     getAllEventsOfUser,
-    updateEventDetails
+    updateEventDetails,
+    getEventCounts
 }
