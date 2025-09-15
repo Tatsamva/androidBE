@@ -282,6 +282,39 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     );
 });
 
+const getAllUsers = asyncHandler(
+    async (req, res) => {
+        // Fetch all users from the database
+        const users = await User.find().select("-password -refreshToken");
+
+        if (!users || users.length === 0) {
+            throw new ApiError(404, "No users found");
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200, { users }, "Users retrieved successfully")
+        );
+    }
+);
+
+const deleteUserById = asyncHandler(
+    async (req, res) => {
+        const { id } = req.body;
+
+        // Check if user exists
+        const user = await User.findById(id);
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        // Delete the user
+        await User.findByIdAndDelete(id);
+
+        return res.status(200).json(
+            new ApiResponse(200, null, "User deleted successfully")
+        );
+    }
+);
 
 export 
 {
@@ -290,7 +323,9 @@ export
    logoutUser,
    refreshAccessToken,
    authRedirect,
-   updateUserDetails
+   updateUserDetails,
+   getAllUsers,
+   deleteUserById
    
  
 }
