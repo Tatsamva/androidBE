@@ -320,7 +320,7 @@ const getUserById = asyncHandler(
         const { id } = req.body;
 
         // Check if user exists
-        const user = await User.findById(id);
+        const user = await User.findById(id).select("-password -refreshToken -createdAt -updatedAt -__v");
         if (!user) {
             throw new ApiError(404, "User not found");
         }
