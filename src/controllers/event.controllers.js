@@ -346,6 +346,20 @@ const approveCancelEvent = asyncHandler(async (req, res) => {
   );
 });
 
+// Get all cancel events
+const getAllCancelEvents = asyncHandler(async (req, res) => {
+  const cancelEvents = await CancelEvent.find()
+    .populate("eventId", "name date location") // optional: populate event details
+    .sort({ createdAt: -1 }); // latest first
+
+  if (!cancelEvents || cancelEvents.length === 0) {
+    throw new ApiError(404, "No cancel events found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, cancelEvents, "Cancel events fetched successfully"));
+});
 
 export{
     registerNewEvent,
@@ -356,5 +370,6 @@ export{
     deleteEventBy,
     getOneEventById,
     cancelEvent,
-    approveCancelEvent
+    approveCancelEvent,
+    getAllCancelEvents
 }
