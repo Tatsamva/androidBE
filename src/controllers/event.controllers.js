@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
+import { CancelEvent } from "../models/cancelEvent.models.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 import { Event } from "../models/event.models.js";
@@ -286,6 +287,64 @@ const updateEventDetails = asyncHandler(async (req, res) => {
 });
 
 
+const cancelEvent = asyncHandler(async (req, res) => {
+  const { eventId, reason } = req.body;
+
+  // Validate required field
+  if (!eventId) {
+    throw new ApiError(400, "Event ID is required");
+  }
+
+  // Check if event exists
+  const existEvent = await Event.findById(eventId);
+  if (!existEvent) {
+    throw new ApiError(404, "Event does not exist");
+  }
+
+  // Create cancel request
+  const cancelReq = await CancelEvent.create({
+    eventId,
+    reason: reason || null, // optional
+    progress: "underprocess",
+  });
+
+  return res.status(201).json(
+    new ApiResponse(201, cancelReq, "Cancel request created successfully")
+  );
+});
+
+
+// Admin: Approve and finalize event cancellation
+const approveCancelEvent = asyncHandler(async (req, res) => {
+  const { eventId } = req.body;
+
+  // Validate required field
+  if (!eventId) {
+    throw new ApiError(400, "Event ID is required");
+  }
+
+  // Check if cancel request exists
+  const cancelReq = await CancelEvent.findOne({ eventId });
+  if (!cancelReq) {
+    throw new ApiError(404, "Cancel request not found for this event");
+  }
+
+  // Check if event exists
+  const existEvent = await Event.findById(eventId);
+  if (!existEvent) {
+    throw new ApiError(404, "Event does not exist");
+  }
+
+  // Delete the event
+  await Event.findByIdAndDelete(eventId);
+
+  // Delete cancel request as well
+  await CancelEvent.findOneAndDelete({ eventId });
+
+  return res.status(200).json(
+    new ApiResponse(200, null, "Event and cancel request deleted successfully")
+  );
+});
 
 
 export{
@@ -295,5 +354,7 @@ export{
     updateEventDetails,
     getEventCounts,
     deleteEventBy,
-    getOneEventById
+    getOneEventById,
+    cancelEvent,
+    approveCancelEvent
 }
