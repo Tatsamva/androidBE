@@ -14,6 +14,6 @@ router.route("/geteventcount").get(getEventCounts)
 router.route("/getoneeventbyid").post(getOneEventById)
 router.route("/cancelevent").post(cancelEvent)
 router.route("/approvecancelevent").post(approveCancelEvent)
-router.route("/getallcancelevents").get(approveCancelEvent)
+router.route("/getallcancelevents").get(getAllCancelEvents)
 
 export default router
