@@ -76,6 +76,38 @@ const registerNewEvent = asyncHandler(async (req, res) => {
 });
 
 //Admin
+const getOneEventById = asyncHandler(async (req, res) => {
+    const { id } = req.body;
+
+    if (!id) {
+        throw new ApiError(400, "Event ID is required");
+    }
+
+    // Find event by ID + populate user details
+    const event = await Event.findById(id)
+        .populate("user", "name email phone address")
+        .select("-createdAt -updatedAt -__v"); // remove unwanted fields
+
+    if (!event) {
+        throw new ApiError(404, "Event not found");
+    }
+
+    // Flatten user fields
+    const { user, ...eventObj } = event.toObject();
+    const formattedEvent = {
+        ...eventObj,
+        user: user?._id, // keep user id
+        name: user?.name,
+        email: user?.email,
+        phone: user?.phone,
+        address: user?.address
+    };
+
+    return res.status(200).json(
+        new ApiResponse(200, formattedEvent, "Event fetched successfully")
+    );
+});
+
 const getAllEventsByCategory = asyncHandler(async (req, res) => {
     const { eventType } = req.body;
 
@@ -262,5 +294,6 @@ export{
     getAllEventsOfUser,
     updateEventDetails,
     getEventCounts,
-    deleteEventBy
+    deleteEventBy,
+    getOneEventById
 }
