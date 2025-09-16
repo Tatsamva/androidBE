@@ -79,11 +79,17 @@ const registerNewEvent = asyncHandler(async (req, res) => {
 const getAllEventsByCategory = asyncHandler(async (req, res) => {
     const { eventType } = req.body;
 
+    let allEventsByCategory;
+
     if (!eventType) {
         throw new ApiError(400, "Event type is required");
     }
 
-    const allEventsByCategory = await Event.find({ eventType });
+    if (eventType === "All Event") {
+        allEventsByCategory = await Event.find({});
+    } else {
+        allEventsByCategory = await Event.find({ eventType });
+    }
 
     if (!allEventsByCategory || allEventsByCategory.length === 0) {
         throw new ApiError(404, "No events found for this category");
@@ -93,6 +99,7 @@ const getAllEventsByCategory = asyncHandler(async (req, res) => {
         new ApiResponse(200, allEventsByCategory, "Events fetched successfully")
     );
 });
+
 
 
 const getEventCounts = asyncHandler(async (req, res) => {
