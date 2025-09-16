@@ -277,7 +277,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     if (type) user.phone = type;
 
     // Save updated user
-    await user.save().select("-password -refreshToken -createdAt -updatedAt -__v");;
+    await user.save();
 
     return res.status(200).json(
         new ApiResponse(200, user, "User details updated successfully")
