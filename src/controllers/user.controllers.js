@@ -256,7 +256,7 @@ const refreshAccessToken = asyncHandler
 )
 //Admin
 const updateUserDetails = asyncHandler(async (req, res) => {
-    const { userId, name, email, phone } = req.body;
+    const { userId, name, email, phone,address,type } = req.body;
 
     // Validate required fields
     if (!userId) {
@@ -273,6 +273,8 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     if (name) user.name = name;
     if (email) user.email = email;
     if (phone) user.phone = phone;
+    if (address) user.phone = address;
+    if (type) user.phone = type;
 
     // Save updated user
     await user.save();
