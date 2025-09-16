@@ -81,11 +81,12 @@ const getAllEventsByCategory = asyncHandler(async (req, res) => {
 
     let allEventsByCategory;
 
+    
     if (!eventType) {
         throw new ApiError(400, "Event type is required");
     }
 
-    if (eventType === "All Event") {
+    if (eventType === "All Events") {
         allEventsByCategory = await Event.find({});
     } else {
         allEventsByCategory = await Event.find({ eventType });
