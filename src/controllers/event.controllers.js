@@ -79,27 +79,41 @@ const registerNewEvent = asyncHandler(async (req, res) => {
 const getAllEventsByCategory = asyncHandler(async (req, res) => {
     const { eventType } = req.body;
 
-    let allEventsByCategory;
-
-    
     if (!eventType) {
         throw new ApiError(400, "Event type is required");
     }
 
-    if (eventType === "All Events") {
-        allEventsByCategory = await Event.find({});
-    } else {
-        allEventsByCategory = await Event.find({ eventType });
+    let query = {};
+    if (eventType !== "All Events") {
+        query.eventType = eventType;
     }
 
-    if (!allEventsByCategory || allEventsByCategory.length === 0) {
+    // Get events with populated user
+    const events = await Event.find(query)
+        .populate("user", "name email phone address");
+
+    if (!events || events.length === 0) {
         throw new ApiError(404, "No events found for this category");
     }
 
+    // Flatten user fields
+    const formattedEvents = events.map(event => {
+        const { user, ...eventObj } = event.toObject();
+        return {
+            ...eventObj,
+            user: user?._id, // keep user id
+            name: user?.name,
+            email: user?.email,
+            phone: user?.phone,
+            address: user?.address
+        };
+    });
+
     return res.status(200).json(
-        new ApiResponse(200, allEventsByCategory, "Events fetched successfully")
+        new ApiResponse(200, formattedEvents, "Events fetched successfully")
     );
 });
+
 
 
 
