@@ -148,6 +148,7 @@ const getEventCounts = asyncHandler(async (req, res) => {
 const deleteEventBy = asyncHandler(async (req, res) => {
     const { id } = req.body;
 
+    
     if (!id) {
         throw new ApiError(400, "Event ID is required");
     }
@@ -158,8 +159,9 @@ const deleteEventBy = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Event not found");
     }
 
+    
     return res.status(200).json(
-        new ApiResponse(200, deletedEvent, "Event deleted successfully")
+        new ApiResponse(200, null, "Event deleted successfully")
     );
 });
 
