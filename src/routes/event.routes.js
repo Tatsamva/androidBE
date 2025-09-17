@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerNewEvent,getAllEventsByCategory,getAllEventsOfUser,updateEventDetails,getEventCounts,deleteEventBy,getOneEventById,cancelEvent,approveCancelEvent,getAllCancelEvents} from "../controllers/event.controllers.js";
+import { registerNewEvent,getAllEventsByCategory,getAllEventsOfUser,updateEventDetails,getEventCounts,deleteEventBy,getOneEventById,cancelEvent,approveCancelEvent,getAllCancelEvents,getAllCancelledEventsFormated} from "../controllers/event.controllers.js";
 const router = Router();
 
 
@@ -15,5 +15,6 @@ router.route("/getoneeventbyid").post(getOneEventById)
 router.route("/cancelevent").post(cancelEvent)
 router.route("/approvecancelevent").post(approveCancelEvent)
 router.route("/getallcancelevents").get(getAllCancelEvents)
+router.route("/getallcanceledeventsfomated").get(getAllCancelledEventsFormated)
 
 export default router

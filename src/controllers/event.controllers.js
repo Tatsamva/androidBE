@@ -313,6 +313,53 @@ const cancelEvent = asyncHandler(async (req, res) => {
   );
 });
 
+// ✅ Get all cancelled events
+const getAllCancelledEventsFormated = asyncHandler(async (req, res) => {
+  // Find all cancel requests and populate the event + user
+  const cancelledEvents = await CancelEvent.find()
+    .populate({
+      path: "eventId",
+      populate: {
+        path: "user",
+        select: "name email phone address", // only needed fields
+      },
+    });
+
+  if (!cancelledEvents || cancelledEvents.length === 0) {
+    throw new ApiError(404, "No cancelled events found");
+  }
+
+  // Flatten structure
+  const formatted = cancelledEvents.map(cancel => {
+    const event = cancel.eventId;
+    if (!event) return null; // defensive
+
+    const { user, ...eventObj } = event.toObject();
+
+    return {
+      cancelId: cancel._id,
+      reason: cancel.reason,
+      progress: cancel.progress,
+      createdAt: cancel.createdAt,
+      updatedAt: cancel.updatedAt,
+
+      // spread event fields
+      ...eventObj,
+
+      // keep user id + flattened fields
+      user: user?._id,
+      name: user?.name,
+      email: user?.email,
+      phone: user?.phone,
+      address: user?.address,
+    };
+  }).filter(Boolean);
+
+  return res.status(200).json(
+    new ApiResponse(200, formatted, "Cancelled events fetched successfully")
+  );
+});
+
 
 // Admin: Approve and finalize event cancellation
 const approveCancelEvent = asyncHandler(async (req, res) => {
@@ -371,5 +418,6 @@ export{
     getOneEventById,
     cancelEvent,
     approveCancelEvent,
-    getAllCancelEvents
+    getAllCancelEvents,
+    getAllCancelledEventsFormated
 }
