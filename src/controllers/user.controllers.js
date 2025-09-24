@@ -273,8 +273,8 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     if (name) user.name = name;
     if (email) user.email = email;
     if (phone) user.phone = phone;
-    if (address) user.phone = address;
-    if (type) user.phone = type;
+    if (address) user.address = address;
+    if (type) user.type = type;
 
     // Save updated user
     await user.save();
