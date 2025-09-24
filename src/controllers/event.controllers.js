@@ -217,14 +217,16 @@ const getAllEventsOfUser = asyncHandler(async (req, res) => {
     // Fetch all events by user
     const userEvents = await Event.find({ user: userId });
 
-    if (!userEvents || userEvents.length === 0) {
-        throw new ApiError(404, "No events found for this user");
-    }
-
+    // ✅ Instead of throwing error, return empty array
     return res.status(200).json(
-        new ApiResponse(200, userEvents, "User events fetched successfully")
+        new ApiResponse(
+            200,
+            userEvents || [], 
+            "User events fetched successfully"
+        )
     );
 });
+
 
 const updateEventDetails = asyncHandler(async (req, res) => {
     const { 
