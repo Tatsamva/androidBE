@@ -62,16 +62,20 @@ const registerNewEvent = asyncHandler(async (req, res) => {
         throw new ApiError(409, "This time slot is already booked at this venue");
     }
 
-    // ✅ Create new event
+   const numPeople = Number(numOfPeopleEating);
+    if (isNaN(numPeople) || numPeople <= 0) {
+    throw new ApiError(400, "numOfPeopleEating must be a valid positive number");
+    }
+
     const newEvent = await Event.create({
-        user: userId,
-        eventType,
-        eventDate,
-        eventTime,
-        numOFMembers,
-        numOfPeopleEating,
-        venue,
-        totalPrice,
+    user: userId,
+    eventType,
+    eventDate,
+    eventTime,
+    numOFMembers,
+    numOfPeopleEating: numPeople, 
+    venue,
+    totalPrice,
     });
 
     return res.status(201).json(
@@ -283,7 +287,7 @@ const updateEventDetails = asyncHandler(async (req, res) => {
     if (eventDate) existEvent.eventDate = eventDate;
     if (eventTime) existEvent.eventTime = eventTime;
     if (numOFMembers) existEvent.numOFMembers = numOFMembers;
-    if (numOfPeopleEating) existEvent.numOfPeopleEating = numOfPeopleEating;
+    if (numOfPeopleEating) existEvent.numOfPeopleEating = Number(numOfPeopleEating);
     if (venue) existEvent.venue = venue;
     if (totalPrice) existEvent.totalPrice = totalPrice;
     await existEvent.save();
