@@ -20,6 +20,7 @@ const registerNewEvent = asyncHandler(async (req, res) => {
         eventDate,
         eventTime,
         numOFMembers,
+        numOfPeopleEating,
         venue,
         totalPrice
     } = req.body;
@@ -31,6 +32,7 @@ const registerNewEvent = asyncHandler(async (req, res) => {
         !eventDate ||
         !eventTime ||
         !numOFMembers ||
+        !numOfPeopleEating||
         !venue ||
         !totalPrice
     ) {
@@ -67,6 +69,7 @@ const registerNewEvent = asyncHandler(async (req, res) => {
         eventDate,
         eventTime,
         numOFMembers,
+        numOfPeopleEating,
         venue,
         totalPrice,
     });
@@ -239,7 +242,8 @@ const updateEventDetails = asyncHandler(async (req, res) => {
         eventType, 
         eventDate, 
         eventTime, 
-        numOFMembers, 
+        numOFMembers,
+        numOfPeopleEating,
         venue, 
         totalPrice 
     } = req.body;
@@ -279,6 +283,7 @@ const updateEventDetails = asyncHandler(async (req, res) => {
     if (eventDate) existEvent.eventDate = eventDate;
     if (eventTime) existEvent.eventTime = eventTime;
     if (numOFMembers) existEvent.numOFMembers = numOFMembers;
+    if (numOfPeopleEating) existEvent.numOfPeopleEating = numOfPeopleEating;
     if (venue) existEvent.venue = venue;
     if (totalPrice) existEvent.totalPrice = totalPrice;
     await existEvent.save();

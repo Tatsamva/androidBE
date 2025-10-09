@@ -25,6 +25,10 @@ const eventSchema = new mongoose.Schema
             type:String,
             required:true
         },
+        numOfPeopleEating: {
+            type: Number,
+            required: true,
+        },
         venue:{
             type:String,
             required:true
